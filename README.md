@@ -1,6 +1,7 @@
 # PythonImageProcessor
 
 CLI Arguments: 
---help: dump CLI commands.
---api_key = Roboflow api key
---source: Image to search gas meter and scan value of.
+<ul>
+<li>--help: dump CLI commands.</li>
+<li>--api_key = Roboflow api key</li>
+<li>--source: Image to search gas meter and scan value of.</li>
