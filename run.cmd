@@ -1,3 +1,3 @@
 @echo off
 
-%cd%/venv/Scripts/python.exe %cd%/src/Main.py --api_key LKdBMkRFfXUt7kMIXNEd
+venv/Scripts/python src/Main.py --api_key LKdBMkRFfXUt7kMIXNEd --source Test/1.jpg

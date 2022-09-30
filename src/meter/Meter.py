@@ -3,14 +3,14 @@ from typing import Dict
 from pyrect import Box
 from re import match
 from pytesseract import pytesseract
-
-try:
-    from meter.MeterDetectionModel import MeterDetectionModel
-except ModuleNotFoundError:
-    from MeterDetectionModel import MeterDetectionModel
+from meter.MeterDetectionModel import MeterDetectionModel
+from meter.MeterVideo import MeterVideo
+from os import path
+import cv2
 
 class Meter:
-    __video = None
+    __source = None
+    
 
     def __init__(self, **kwargs: Dict[str, any]) -> None:
         """
@@ -21,26 +21,15 @@ class Meter:
         """
 
         # Check voor api key in kwargs (optionele named argumenten, (ex: Meter(api_key="hello world"))
-        assert isinstance(kwargs.get("camera_id"), int)
-        
-        try:
-            from meter.MeterVideo import MeterVideo
-        except ModuleNotFoundError:
-            from MeterVideo import MeterVideo
+        assert isinstance(kwargs.get("source"), str)
+        if not path.exists(kwargs.get("source")):
+            raise FileExistsError("FileNotFound: File did not exist.")
 
-        self.__video = MeterVideo(self, kwargs.get("camera_id"))
+        self.__source = cv2.imread(kwargs.get("source"))
 
-    # region properties (getters)
 
-    @property
-    def video_interface(self):
-        """
-        Get the bound MeterVideo interface.
 
-        :return: MeterVideo(self)
-        """
-        return self.__video
-
+    
     @property  # Getter property
     def meter_image(self):
         """
@@ -49,11 +38,25 @@ class Meter:
         :return: numpy.ndarray | None
         """
 
-        rect: Box = MeterDetectionModel.getMeterLocation(self.video_interface.camera_frame)
+        rect: Box = MeterDetectionModel.getMeterLocation(self.__source)
         if rect is None:
             return rect
 
-        return self.video_interface.camera_frame[rect.top:rect.top + rect.height, rect.left:rect.left + rect.width]
+        image = self.__source[rect.top:rect.top + rect.height, rect.left:rect.left + rect.width]
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        tresh = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        image = cv2.Canny(tresh, 50, 200)
+        
+        # Remove horizontal
+        horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25,1))
+        detected_lines = cv2.morphologyEx(tresh, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
+        cnts = cv2.findContours(detected_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+        for c in cnts:
+            cv2.drawContours(tresh, [c], -1, (255,255,255), 2)
+
+        return cv2.bitwise_not(tresh)
 
     @property  # Getter property
     def meter_value(self):
@@ -81,6 +84,7 @@ class Meter:
     # endregion
 
 if __name__ == "__main__":
-    meter = Meter(camera_id=0)
-    print(meter)
-    meter.video_interface.show()
+    meter = Meter(source="./Test/1.jpg")
+    
+    cv2.imshow("", meter.meter_image)
+    cv2.waitKey(0)

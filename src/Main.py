@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from typing import Dict
+import cv2
 
 from pytesseract import pytesseract
 import winreg
@@ -9,7 +10,7 @@ from meter.Meter import Meter
 from meter.MeterDetectionModel import MeterDetectionModel
 
 # Meer comments en beschrijving komen er aan, code is eerst geschreven en dan de comments dus nog even geduld voor de hele documentatie ':) 
-
+    
 class Main:
     def __init__(self, **kwargs: Dict[str, any]):
         """
@@ -41,27 +42,25 @@ class Main:
 
         # Creer meter parser object gebaseerd op CLI argument "camera_id" (default: 0)
         self.__meter = Meter(**kwargs)
-        self.__Start(kwargs.get("headless"))
+        self.__Start()
 
-    def __Start(self, headless: bool):
+    def __Start(self):
         """
             Start application if all checks verified.
 
             :param headless: No video display
         """
-        if headless:  # Log info zonder video display te weergeven
-            print("Meter value: {value}".format(value=self.__meter.meter_value))
-        else:
-            print("Showing video interface")
-            self.__meter.video_interface.show()
+        print("Meter value: {value}".format(value=self.__meter.meter_value))
+  
+        cv2.imshow("", self.__meter.meter_image)
+        cv2.waitKey(0)
 
 
 if __name__ == '__main__':
     # Creer CLI argumenten object.
     parser = ArgumentParser()
     parser.add_argument("--api_key", metavar="api_key", type=str, help="Roboflow API Key")
-    parser.add_argument("--headless", help="Log current info without video", action="store_true")
-    parser.add_argument("--camera_id", help="Camera id to listen on", action="store", default=0)
+    parser.add_argument("--source", metavar="source", type=str, help="Input source filepath")
 
     # Parse CLI argumenten.
     args = parser.parse_args()
