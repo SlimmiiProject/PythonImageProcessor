@@ -47,16 +47,20 @@ class Meter:
 
         tresh = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
         image = cv2.Canny(tresh, 50, 200)
+
+        originalSize = image.shape 
+        
+        image = cv2.bitwise_not(cv2.resize(tresh, (int(originalSize[1]*.5), int(originalSize[0]*.5))))
         
         # Remove horizontal
-        horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25,1))
-        detected_lines = cv2.morphologyEx(tresh, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
-        cnts = cv2.findContours(detected_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-        for c in cnts:
-            cv2.drawContours(tresh, [c], -1, (255,255,255), 2)
+        # horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25,1))
+        # detected_lines = cv2.morphologyEx(tresh, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
+        # cnts = cv2.findContours(detected_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+        # for c in cnts:
+        #     cv2.drawContours(tresh, [c], -1, (255,255,255), 2)
 
-        return cv2.bitwise_not(tresh)
+        return image
 
     @property  # Getter property
     def meter_value(self):
@@ -67,24 +71,15 @@ class Meter:
         """
         output = None
         try:  # Exception capture -> raised soms invalid image object error als frame niet goed gecaptured is.
-
             # Todo: Image processing toevoegen voor OCR resultaat te optimalizeren
-
-            output = pytesseract.image_to_string(self.meter_image, config="digits")
+            output = pytesseract.image_to_string(self.meter_image, config="--psm 8 digits")
             # Patroon check is 8 karakters van 0-9 om foute OCR resultaten te filteren (Moet nog uitgebreid worden)
             if not match(r"^[0-9]{8}$", output):
                 print("Meter has invalid format: " + output)
                 output = None
-
         except Exception as e:
             print(e)
         finally:
             return output
 
     # endregion
-
-if __name__ == "__main__":
-    meter = Meter(source="./Test/1.jpg")
-    
-    cv2.imshow("", meter.meter_image)
-    cv2.waitKey(0)
