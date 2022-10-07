@@ -33,7 +33,7 @@ Python script made to process images sent from the server, these images will be 
 
 </ul>
 
-<a href="https://github.com/GremlinsAP/TheOne/graphs/contributors">
+<a href="https://github.com/SlimmiiProject/PythonImageProcessor/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=SlimmiiProject/PythonImageProcessor" style="margin-top:1rem"/>
 </a>
 
