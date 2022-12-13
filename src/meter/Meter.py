@@ -1,3 +1,4 @@
+import re
 from typing import Dict
 
 from pyrect import Box
@@ -5,12 +6,11 @@ from re import match
 from pytesseract import pytesseract
 from meter.MeterDetectionModel import MeterDetectionModel
 from meter.MeterVideo import MeterVideo
-from os import path
+from os import path, listdir
 import cv2
 
 class Meter:
     __source = None
-    
 
     def __init__(self, **kwargs: Dict[str, any]) -> None:
         """
@@ -21,46 +21,40 @@ class Meter:
         """
 
         # Check voor api key in kwargs (optionele named argumenten, (ex: Meter(api_key="hello world"))
+        print(listdir("../"))
         assert isinstance(kwargs.get("source"), str)
         if not path.exists(kwargs.get("source")):
             raise FileExistsError("FileNotFound: File did not exist.")
 
         self.__source = cv2.imread(kwargs.get("source"))
 
-
-
     
     @property  # Getter property
-    def meter_image(self):
+    def meter_images(self):
         """
         Get the detected meter image if found, otherwise returns None.
 
         :return: numpy.ndarray | None
         """
 
-        rect: Box = MeterDetectionModel.getMeterLocation(self.__source)
-        if rect is None:
-            return rect
+        rects: Box = MeterDetectionModel.getMeterLocation(self.__source)
+        if rects is None or not len(rects):
+            return rects
 
-        image = self.__source[rect.top:rect.top + rect.height, rect.left:rect.left + rect.width]
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        output = []
+        for rect in rects:
+            image = self.__source[rect.top:rect.top + rect.height, rect.left:rect.left + rect.width]
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        tresh = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-        image = cv2.Canny(tresh, 50, 200)
+            tresh = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+            image = cv2.Canny(tresh, 50, 200)
 
-        originalSize = image.shape 
-        
-        image = cv2.bitwise_not(cv2.resize(tresh, (int(originalSize[1]*.5), int(originalSize[0]*.5))))
-        
-        # Remove horizontal
-        # horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25,1))
-        # detected_lines = cv2.morphologyEx(tresh, cv2.MORPH_OPEN, horizontal_kernel, iterations=2)
-        # cnts = cv2.findContours(detected_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        # cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-        # for c in cnts:
-        #     cv2.drawContours(tresh, [c], -1, (255,255,255), 2)
+            originalSize = image.shape
 
-        return image
+            image = cv2.bitwise_not(cv2.resize(tresh, (int(originalSize[1]*.5), int(originalSize[0]*.5))))
+            output.append(image)
+
+        return output
 
     @property  # Getter property
     def meter_value(self):
@@ -69,17 +63,17 @@ class Meter:
 
         :return: string | None
         """
-        output = None
+        output = {"dag": -1, "nacht": -1}
+
         try:  # Exception capture -> raised soms invalid image object error als frame niet goed gecaptured is.
-            # Todo: Image processing toevoegen voor OCR resultaat te optimalizeren
-            output = pytesseract.image_to_string(self.meter_image, config="--psm 8 digits")
-            # Patroon check is 8 karakters van 0-9 om foute OCR resultaten te filteren (Moet nog uitgebreid worden)
-            if not match(r"^[0-9]{8}$", output):
-                print("Meter has invalid format: " + output)
-                output = None
+            images = self.meter_images
+            for i in range(0, len(images)):
+                # Todo: Image processing toevoegen voor OCR resultaat te optimalizeren
+                output["dag" if i == 0 else "nacht"] = re.sub("[a-zA-Z-\n]*", "", pytesseract.image_to_string(images[i], config="--psm 8 digits"))
         except Exception as e:
             print(e)
         finally:
+            print(output)
             return output
 
     # endregion

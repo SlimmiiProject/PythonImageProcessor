@@ -50,10 +50,7 @@ class Main:
 
             :param headless: No video display
         """
-        print("Meter value: {value}".format(value=self.__meter.meter_value))
-  
-        cv2.imshow("", self.__meter.meter_image)
-        cv2.waitKey(0)
+        print(self.__meter.meter_value)
 
 
 if __name__ == '__main__':

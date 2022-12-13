@@ -1,3 +1,5 @@
+from ctypes import Union
+
 import cv2
 
 from pyrect import Box
@@ -24,7 +26,7 @@ class __MeterDetectionModel:
         self.__rf_workspace = self.__rf.workspace("jannick-oste-yamid").project("gasmeter-belgium")
         self.__rf_model = self.__rf_workspace.version(3).model
 
-    def getMeterLocation(self, frame) -> Box:
+    def getMeterLocation(self, frame):
         """
         Get area where meter is located in (x, y, width, height)
 
@@ -38,14 +40,13 @@ class __MeterDetectionModel:
         if len(predictions) == 0:
             return None
         else:
-            prediction = predictions[0]
 
-            return Box(
+            return list(map(lambda prediction: Box(
                 # X, Y
                 int(prediction["x"] - (prediction["width"] / 2)), int(prediction["y"] - (prediction["height"] / 2)),
                 # Width, Height
                 int(prediction["width"]), int(prediction["height"])
-            )
+            ), predictions))
 
 
 # Singleton patroon, zo wordt de API maar éénmaal ingeladen
