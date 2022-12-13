@@ -2,6 +2,7 @@
  ![](https://img.shields.io/badge/Project_Type-IT_Case-orange.svg) 
  ![](https://img.shields.io/badge/Python-blue.svg)
  ![](https://img.shields.io/badge/Owner-Andie_Similon-blue.svg) ![](https://img.shields.io/badge/Project%20Status-Incomplete-red.svg)
+ [![Build](https://github.com/SlimmiiProject/PythonImageProcessor/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/SlimmiiProject/PythonImageProcessor/actions/workflows/codeql-analysis.yml)
 
 
 # About this project
@@ -32,7 +33,7 @@ Python script made to process images sent from the server, these images will be 
 
 </ul>
 
-<a href="https://github.com/GremlinsAP/TheOne/graphs/contributors">
+<a href="https://github.com/SlimmiiProject/PythonImageProcessor/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=SlimmiiProject/PythonImageProcessor" style="margin-top:1rem"/>
 </a>
 
